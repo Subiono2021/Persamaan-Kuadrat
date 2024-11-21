@@ -1,0 +1,114 @@
+from sympy import symbols, sqrt, latex, simplify
+from IPython.display import display, Math, clear_output
+import ipywidgets as widgets
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Definisi variabel simbolik
+x = symbols('x')  # Variabel kuadrat
+a, b, c = symbols('a b c')  # Koefisien
+
+# Kotak input dengan ukuran kecil menggunakan widgets
+a_input = widgets.IntText(description='a:', value=1, layout=widgets.Layout(width='150px'))
+b_input = widgets.IntText(description='b:', value=1, layout=widgets.Layout(width='150px'))
+c_input = widgets.IntText(description='c:', value=1, layout=widgets.Layout(width='150px'))
+
+# Keterangan dalam kotak
+keterangan_box = widgets.HTML(
+    """
+    <div style="
+        border: 1px solid #4CAF50;
+        padding: 10px;
+        border-radius: 5px;
+        background-color: #f9f9f9;
+        color: #333;
+        font-size: 14px;
+        line-height: 1.5;
+    ">
+        <b>Keterangan Program:</b><br>
+        Program ini digunakan untuk menyelesaikan persamaan kuadrat dengan format:
+        <b>ax² + bx + c = 0</b>.<br>
+        <ul>
+            <li>Masukkan nilai <b>a</b>, <b>b</b>, dan <b>c</b>.</li>
+            <li>Pastikan <b>a ≠ 0</b>.</li>
+        </ul>
+        Program akan menghitung diskriminan, menampilkan jenis akar, serta menggambar grafik persamaan kuadrat.
+    </div>
+    """
+)
+
+# Fungsi untuk menggambar grafik
+def plot_persamaan(a, b, c):
+    x_vals = np.linspace(-10, 10, 500)
+    y_vals = a * x_vals**2 + b * x_vals + c
+
+    fig, ax = plt.subplots(figsize=(4, 3))  # Ukuran grafik lebih kecil
+    ax.plot(x_vals, y_vals, label=f"${a}x^2 + {b}x + {c}$", color='blue')
+    ax.axhline(0, color='black', linewidth=0.8, linestyle='--')
+    ax.axvline(0, color='black', linewidth=0.8, linestyle='--')
+    ax.grid(color='gray', linestyle='--', linewidth=0.5)
+    ax.set_title("Grafik Persamaan Kuadrat", fontsize=10)
+    ax.set_xlabel("x", fontsize=8)
+    ax.set_ylabel("y", fontsize=8)
+    ax.legend(loc="upper center", fontsize=8)
+    plt.tight_layout()
+    return fig
+
+# Fungsi untuk menghitung dan menampilkan output
+def hitung_persamaan(change):
+    clear_output(wait=True)  # Membersihkan output sebelumnya
+    display(keterangan_box)  # Menampilkan keterangan kembali
+    display(widgets.VBox([a_input, b_input, c_input]))  # Menampilkan input lagi
+    
+    a_val, b_val, c_val = a_input.value, b_input.value, c_input.value
+
+    # Validasi nilai a ≠ 0
+    if a_val == 0:
+        display(Math(r"\text{Error: Nilai } a \text{ tidak boleh } 0."))
+        return
+
+    # Persamaan kuadrat dengan nilai yang dimasukkan
+    persamaan = a_val * x**2 + b_val * x + c_val
+    output_text = widgets.Output()
+    with output_text:
+        display(Math(r"\text{Persamaan kuadrat: } " + latex(persamaan) + " = 0"))
+
+        # Menghitung diskriminan
+        D = b_val**2 - 4 * a_val * c_val
+        display(Math(r"\text{Diskriminan: } \Delta = " + latex(D)))
+
+        # Menentukan jenis akar berdasarkan diskriminan
+        if D > 0:
+            display(Math(r"\text{Akar-akar persamaan adalah real dan berbeda:}"))
+            x1 = simplify((-b_val + sqrt(D)) / (2 * a_val))
+            x2 = simplify((-b_val - sqrt(D)) / (2 * a_val))
+            display(Math(r"x_1 = " + latex(x1)))
+            display(Math(r"x_2 = " + latex(x2)))
+        elif D == 0:
+            display(Math(r"\text{Akar-akar persamaan adalah real dan sama:}"))
+            x1 = simplify(-b_val / (2 * a_val))
+            display(Math(r"x = " + latex(x1)))
+        else:
+            display(Math(r"\text{Akar-akar persamaan adalah tidak real (imajiner):}"))
+            x1 = simplify((-b_val + sqrt(D)) / (2 * a_val))
+            x2 = simplify((-b_val - sqrt(D)) / (2 * a_val))
+            display(Math(r"x_1 = " + latex(x1)))
+            display(Math(r"x_2 = " + latex(x2)))
+
+    # Menampilkan grafik persamaan
+    output_graph = widgets.Output()
+    with output_graph:
+        fig = plot_persamaan(a_val, b_val, c_val)
+        plt.show()
+
+    # Menyusun output dalam layout: Grafik di atas teks hasil perhitungan
+    display(widgets.VBox([output_graph, output_text]))
+
+# Menambahkan event listener untuk setiap perubahan nilai input
+a_input.observe(hitung_persamaan, names='value')
+b_input.observe(hitung_persamaan, names='value')
+c_input.observe(hitung_persamaan, names='value')
+
+# Menampilkan keterangan dan input pertama kali
+display(keterangan_box)
+display(widgets.VBox([a_input, b_input, c_input]))
